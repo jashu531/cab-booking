@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Online Cab Booking System</title>
+    
+    <!-- Leaflet CSS (Required for Map) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+    <!-- Google Maps API -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD5Q95Yy4noVqrz3tR6K7Hpi2zX2mQ11uo&libraries=places"></script>
+
+    <script src="script.js" defer></script>
+</head>
+<body>
+    <div class="container">
+        <div class="auth-container">
+            <h1>Online Cab Booking System</h1>
+            <div id="auth-options">
+                <button id="login-button">Login</button>
+                <button id="register-button">Register</button>
+            </div>
+
+            <div id="login-form" style="display: none;">
+                <h2>Login</h2>
+                <input type="text" id="login-username" placeholder="Username"><br>
+                <input type="password" id="login-password" placeholder="Password"><br>
+                <button id="login-submit">Login</button>
+                <p id="login-error" style="color: red;"></p>
+            </div>
+
+            <div id="register-form" style="display: none;">
+                <h2>Register</h2>
+                <input type="text" id="register-username" placeholder="Username"><br>
+                <input type="password" id="register-password" placeholder="Password"><br>
+                <select id="register-role">
+                    <option value="passenger">Passenger</option>
+                    <option value="driver">Driver</option>
+                    <option value="admin">Admin</option>
+                </select><br>
+                <button id="register-submit">Register</button>
+                <p id="register-error" style="color: red;"></p>
+            </div>
+        </div>
+
+        <div class="map-container">
+            <h3>Your Location</h3>
+            <div id="map" style="width: 100%; height: 400px;"></div>
+        </div>
+    </div>
+
+    <script>
+        // 🔹 Initialize Map and Get User Location
+        document.addEventListener("DOMContentLoaded", function () {
+            if ("geolocation" in navigator) {
+                navigator.geolocation.getCurrentPosition(
+                    function (position) {
+                        let lat = position.coords.latitude;
+                        let lng = position.coords.longitude;
+
+                        let map = L.map("map").setView([lat, lng], 15);
+
+                        // Add OpenStreetMap tiles
+                        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+                            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                        }).addTo(map);
+
+                        // Add a marker for the user's location
+                        L.marker([lat, lng]).addTo(map)
+                            .bindPopup("You are here!")
+                            .openPopup();
+                    },
+                    function (error) {
+                        console.error("Error getting location:", error);
+                        alert("Unable to retrieve your location.");
+                    }
+                );
+            } else {
+                alert("Geolocation is not supported by your browser.");
+            }
+        });
+
+        // 🔹 Handle Login & Register Forms
+        document.addEventListener("DOMContentLoaded", function () {
+            const loginButton = document.getElementById("login-button");
+            const registerButton = document.getElementById("register-button");
+            const loginForm = document.getElementById("login-form");
+            const registerForm = document.getElementById("register-form");
+
+            const loginSubmit = document.getElementById("login-submit");
+            const registerSubmit = document.getElementById("register-submit");
+
+            // ✅ Show Login Form
+            loginButton.addEventListener("click", function () {
+                loginForm.style.display = "block";
+                registerForm.style.display = "none";
+            });
+
+            // ✅ Show Register Form
+            registerButton.addEventListener("click", function () {
+                registerForm.style.display = "block";
+                loginForm.style.display = "none";
+            });
+
+            // ✅ Handle Login
+            loginSubmit.addEventListener("click", function () {
+                let username = document.getElementById("login-username").value;
+                let password = document.getElementById("login-password").value;
+
+                if (!username || !password) {
+                    document.getElementById("login-error").textContent = "Please fill in both fields.";
+                    return;
+                }
+
+                // 🔹 Simulating API call (Replace with your backend API)
+                fetch("http://localhost:8080/api/auth/login", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ username, password })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert("Login successful!");
+                        window.location.href = "dashboard.html";  // Redirect to dashboard
+                    } else {
+                        document.getElementById("login-error").textContent = "Invalid credentials!";
+                    }
+                })
+                .catch(error => console.error("Login error:", error));
+            });
+
+            // ✅ Handle Register
+            registerSubmit.addEventListener("click", function () {
+                let username = document.getElementById("register-username").value;
+                let password = document.getElementById("register-password").value;
+                let role = document.getElementById("register-role").value;
+
+                if (!username || !password) {
+                    document.getElementById("register-error").textContent = "Please fill in all fields.";
+                    return;
+                }
+
+                // 🔹 Simulating API call (Replace with your backend API)
+                fetch("http://localhost:8080/api/auth/register", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ username, password, role })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert("Registration successful! Please login.");
+                        loginForm.style.display = "block";
+                        registerForm.style.display = "none";
+                    } else {
+                        document.getElementById("register-error").textContent = "Registration failed!";
+                    }
+                })
+                .catch(error => console.error("Register error:", error));
+            });
+        });
+    </script>
+</body>
+</html>
